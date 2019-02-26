@@ -10,9 +10,10 @@ def read(file_name):
 
 setuptools.setup(
     name="circleci-flaky",
-    version="1.0.1",
+    version="1.0.2",
     description="Fetch a list of flaky tests from a CircleCI project.",
     long_description=read("README.md"),
+    long_description_content_type="text/markdown",
     url="https://github.com/ryanwilsonperkin/circleci-flaky",
     author="Ryan Wilson-Perkin",
     author_email="ryanwilsonperkin@gmail.com",
