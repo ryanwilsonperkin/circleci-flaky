@@ -1,9 +1,18 @@
 import setuptools
+import os
+
+
+def read(file_name):
+    file_path = os.path.join(os.path.dirname(__file__), file_name)
+    with open(file_path, "r") as f:
+        return f.read()
+
 
 setuptools.setup(
     name="circleci-flaky",
-    version="1.0.0",
+    version="1.0.1",
     description="Fetch a list of flaky tests from a CircleCI project.",
+    long_description=read("README.md"),
     url="https://github.com/ryanwilsonperkin/circleci-flaky",
     author="Ryan Wilson-Perkin",
     author_email="ryanwilsonperkin@gmail.com",
