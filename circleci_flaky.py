@@ -4,11 +4,10 @@
 
 Fetch a list of flaky tests from a CircleCI project.
 
-Searches the last 30 builds that have failed on the master branch, downloads any
-junit.xml artifacts it finds for them, and reports the tests that have failed.
+Searches the last 30 builds that have failed on the master branch and reports
+the tests that have failed.
 
-Branch name, test results file, number of builds, and number of results are all
-customizable.
+Branch name, number of builds, and number of results are all customizable.
 
 Installation:
     pip install requests
@@ -18,10 +17,8 @@ Usage:
 """
 import argparse
 import collections
-import fnmatch
 import os
 import sys
-import xml.etree.ElementTree
 
 # External dependencies
 try:
@@ -51,15 +48,6 @@ def circleci_fetch(api, **kwargs):
     return response.json()
 
 
-def circleci_fetch_artifact(url):
-    token = get_token()
-    response = requests.get(
-        url,
-        params={"circle-token": token},
-    )
-    return response.text
-
-
 def fetch_failed_builds(project_name, branch, builds):
     MAX_LIMIT = 100
     return circleci_fetch(
@@ -69,35 +57,24 @@ def fetch_failed_builds(project_name, branch, builds):
     )
 
 
-def fetch_build_artifact(project_name, build_number, artifact_name):
-    artifacts = circleci_fetch(f"/project/github/{project_name}/{build_number}/artifacts")
-    for artifact in artifacts:
-        if fnmatch.fnmatch(artifact["path"], artifact_name):
-            yield artifact
-
-
-def parse_artifact_failures(artifact_content):
-    root = xml.etree.ElementTree.fromstring(artifact_content)
-    for element in root.findall(".//testcase"):
-        if element.findall("failure"):
-            classname = element.get('classname')
-            name = element.get('name')
+def fetch_test_failures(project_name, build_number):
+    test_results = circleci_fetch(f"/project/github/{project_name}/{build_number}/tests")
+    for test_result in test_results["tests"]:
+        if test_result["result"] == "failure":
+            classname = test_result["classname"]
+            name = test_result["name"]
             yield f"{classname}.{name}"
 
 
-def flaky(project_name, branch, builds, top, artifact_name):
+def flaky(project_name, branch, builds, top):
     failures = []
     failures_map = collections.defaultdict(list)
 
     builds = fetch_failed_builds(project_name, branch, builds)
     for build in builds:
-        artifacts = fetch_build_artifact(project_name, build["build_num"], artifact_name)
-        for artifact in artifacts:
-            artifact_content = circleci_fetch_artifact(artifact["url"])
-            build_failures = parse_artifact_failures(artifact_content)
-            for build_failure in build_failures:
-                failures.append(build_failure)
-                failures_map[build_failure].append(build)
+        for failure in fetch_test_failures(project_name, build["build_num"]):
+            failures.append(failure)
+            failures_map[failure].append(build)
 
     counter = collections.Counter(failures)
     for failure, count in counter.most_common(top):
@@ -133,14 +110,6 @@ def get_parser():
         type=int,
         help='limit results to the top N (default: all)',
     )
-    parser.add_argument(
-        '--test-artifact-name',
-        dest='artifact_name',
-        default='*junit.xml',
-        metavar='FILE',
-        type=str,
-        help='the full path to the file where test results are stored; supports wildcards (default: *junit.xml)',
-    )
     return parser
 
 
@@ -153,7 +122,7 @@ def main():
         )
     parser = get_parser()
     args = parser.parse_args()
-    flaky(args.project, args.branch, args.builds, args.top, args.artifact_name)
+    flaky(args.project, args.branch, args.builds, args.top)
 
 
 if __name__ == "__main__":
