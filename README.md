@@ -38,6 +38,30 @@ sudo pip3 install circleci-flaky
 sudo pip install circleci-flaky
 ```
 
+## Usage
+
+Because this tool leverages the CircleCI API, you'll need a Personal API Token.
+Navigate to https://circleci.com/account/api and create a new token (note it
+down).
+
+Run the command like so:
+
+```sh
+CIRCLECI_TOKEN=your_token circleci-flaky org/repo
+```
+
+If you want to persist the token for multiple runs in your terminal, export it instead:
+
+```sh
+export CIRCLECI_TOKEN=your_token
+```
+
+then run the command without specifying the token:
+
+```sh
+circleci-flaky org/repo
+```
+
 ## Contributing
 
 Contributors welcome!
