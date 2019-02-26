@@ -1,19 +1,11 @@
 #!/usr/local/bin/python3
 """
-@author Ryan Wilson-Perkin
-
 Fetch a list of flaky tests from a CircleCI project.
 
 Searches the last 30 builds that have failed on the master branch and reports
 the tests that have failed.
 
 Branch name, number of builds, and number of results are all customizable.
-
-Installation:
-    pip install requests
-
-Usage:
-    ./circleci_flaky.py --help
 """
 import argparse
 import collections
